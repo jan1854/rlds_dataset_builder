@@ -43,5 +43,4 @@ The dataset consists of states and actions that were sampled at a frequency of 5
 
 All pressures are represented as integer values.
 To convert these values to bar, use the following formula
-$$ p_\mathrm{bar} = s p_\mathrm{raw} + p_0 $$
-with $s = 0.0002$ and $p_0 = -1.7888$.
+$p_\mathrm{bar} = s p_\mathrm{raw} + p_0$ with $s = 0.0002$ and $p_0 = -1.7888$.
