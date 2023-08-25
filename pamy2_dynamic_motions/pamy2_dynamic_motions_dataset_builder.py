@@ -1,13 +1,15 @@
+from pathlib import Path
 from typing import Iterator, Tuple, Any
 
 import glob
 import numpy as np
+import pandas as pd
 import tensorflow as tf
 import tensorflow_datasets as tfds
 import tensorflow_hub as hub
 
 
-class ExampleDataset(tfds.core.GeneratorBasedBuilder):
+class PAMY2DynamicMotions(tfds.core.GeneratorBasedBuilder):
     """DatasetBuilder for example dataset."""
 
     VERSION = tfds.core.Version('1.0.0')
@@ -25,30 +27,23 @@ class ExampleDataset(tfds.core.GeneratorBasedBuilder):
             features=tfds.features.FeaturesDict({
                 'steps': tfds.features.Dataset({
                     'observation': tfds.features.FeaturesDict({
-                        'image': tfds.features.Image(
-                            shape=(64, 64, 3),
-                            dtype=np.uint8,
-                            encoding_format='png',
-                            doc='Main camera RGB observation.',
-                        ),
-                        'wrist_image': tfds.features.Image(
-                            shape=(64, 64, 3),
-                            dtype=np.uint8,
-                            encoding_format='png',
-                            doc='Wrist camera RGB observation.',
-                        ),
+                        # 'image': tfds.features.Image(
+                        #     shape=(0, 0, 0),
+                        #     dtype=np.uint8,
+                        #     encoding_format='png',
+                        #     doc='Main camera RGB observation.',
+                        # ),
                         'state': tfds.features.Tensor(
-                            shape=(10,),
+                            shape=(16,),
                             dtype=np.float32,
-                            doc='Robot state, consists of [7x robot joint angles, '
-                                '2x gripper position, 1x door opening angle].',
+                            doc='Robot state, consists of 4x robot joint angles, '
+                                '4x robot joint velocities, 8x observed muscle pressures.',
                         )
                     }),
                     'action': tfds.features.Tensor(
-                        shape=(10,),
+                        shape=(8,),
                         dtype=np.float32,
-                        doc='Robot action, consists of [7x joint velocities, '
-                            '2x gripper velocities, 1x terminate episode].',
+                        doc='Robot action, consists of 8x desired muscle pressures.',
                     ),
                     'discount': tfds.features.Scalar(
                         dtype=np.float32,
@@ -90,8 +85,7 @@ class ExampleDataset(tfds.core.GeneratorBasedBuilder):
     def _split_generators(self, dl_manager: tfds.download.DownloadManager):
         """Define data splits."""
         return {
-            'train': self._generate_examples(path='data/train/episode_*.npy'),
-            'val': self._generate_examples(path='data/val/episode_*.npy'),
+            'train': self._generate_examples(Path(__file__).parent / "data" / "*"),
         }
 
     def _generate_examples(self, path) -> Iterator[Tuple[str, Any]]:
@@ -99,27 +93,34 @@ class ExampleDataset(tfds.core.GeneratorBasedBuilder):
 
         def _parse_example(episode_path):
             # load raw data --> this should change for your dataset
-            data = np.load(episode_path, allow_pickle=True)     # this is a list of dicts in our case
+            data = pd.read_pickle(episode_path)
+
+            state_columns = ([f"position_{i}" for i in range(4)]
+                             + [f"velocity_{i}" for i in range(4)]
+                             + [f"observed_pressure_{i}_{muscle}" for i in range(4) for muscle in ["ago", "antago"]])
+            action_columns = [f"desired_pressure_{i}_{muscle}" for i in range(4) for muscle in ["ago", "antago"]]
 
             # assemble episode --> here we're assuming demos so we set reward to 1 at the end
             episode = []
             for i, step in enumerate(data):
+                dummy_language_instruction = 'move dynamically'
                 # compute Kona language embedding
-                language_embedding = self._embed([step['language_instruction']])[0].numpy()
+                language_embedding = self._embed([dummy_language_instruction])[0].numpy()
+                state = data.loc[i, state_columns].values.astype(np.float32)
+                action = data.loc[i, action_columns].values.astype(np.float32)
 
                 episode.append({
                     'observation': {
-                        'image': step['image'],
-                        'wrist_image': step['wrist_image'],
-                        'state': step['state'],
+                        # 'image': np.zeros((0, 0, 0), dtype=np.uint8),
+                        'state': state,
                     },
-                    'action': step['action'],
+                    'action': action,
                     'discount': 1.0,
-                    'reward': float(i == (len(data) - 1)),
-                    'is_first': i == 0,
-                    'is_last': i == (len(data) - 1),
-                    'is_terminal': i == (len(data) - 1),
-                    'language_instruction': step['language_instruction'],
+                    'reward': 0.0,
+                    'is_first': False,      # TODO: Should I set this?
+                    'is_last': False,
+                    'is_terminal': False,
+                    'language_instruction': dummy_language_instruction,
                     'language_embedding': language_embedding,
                 })
 
@@ -135,7 +136,7 @@ class ExampleDataset(tfds.core.GeneratorBasedBuilder):
             return episode_path, sample
 
         # create list of all examples
-        episode_paths = glob.glob(path)
+        episode_paths = glob.glob(str(path))
 
         # for smallish datasets, use single-thread parsing
         for sample in episode_paths:
