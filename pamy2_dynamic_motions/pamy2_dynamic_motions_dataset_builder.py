@@ -9,7 +9,7 @@ import tensorflow_datasets as tfds
 import tensorflow_hub as hub
 
 
-class PAMY2DynamicMotions(tfds.core.GeneratorBasedBuilder):
+class Pamy2DynamicMotions(tfds.core.GeneratorBasedBuilder):
     """DatasetBuilder for example dataset."""
 
     VERSION = tfds.core.Version('1.0.0')
@@ -36,43 +36,42 @@ class PAMY2DynamicMotions(tfds.core.GeneratorBasedBuilder):
                         'state': tfds.features.Tensor(
                             shape=(16,),
                             dtype=np.float32,
-                            doc='Robot state, consists of 4x robot joint angles, '
-                                '4x robot joint velocities, 8x observed muscle pressures.',
+                            doc='Robot state, consists of 4x robot joint angles [rad], 4x robot joint velocities [rad/s], '
+                                '8x observed muscle pressures (agonist 0, antagonist 0, agonist 1, ...).',
                         )
                     }),
                     'action': tfds.features.Tensor(
                         shape=(8,),
                         dtype=np.float32,
-                        doc='Robot action, consists of 8x desired muscle pressures.',
+                        doc='Robot action, consists of 8x desired muscle pressures (agonist 0, antagonist 0, agonist 1, ...).',
                     ),
                     'discount': tfds.features.Scalar(
                         dtype=np.float32,
-                        doc='Discount if provided, default to 1.'
+                        doc='There is no discount factor in the data, set to 1.'
                     ),
                     'reward': tfds.features.Scalar(
                         dtype=np.float32,
-                        doc='Reward if provided, 1 on final step for demos.'
+                        doc='There is no reward in the data, set to 0.'
                     ),
                     'is_first': tfds.features.Scalar(
                         dtype=np.bool_,
-                        doc='True on first step of the episode.'
+                        doc='The data is not divided into episodes, set to False.'
                     ),
                     'is_last': tfds.features.Scalar(
                         dtype=np.bool_,
-                        doc='True on last step of the episode.'
+                        doc='The data is not divided into episodes, set to False.'
                     ),
                     'is_terminal': tfds.features.Scalar(
                         dtype=np.bool_,
-                        doc='True on last step of the episode if it is a terminal step, True for demos.'
+                        doc='The data is not divided into episodes, set to False.'
                     ),
                     'language_instruction': tfds.features.Text(
-                        doc='Language Instruction.'
+                        doc='There are no language instructions in the data, set to a dummy value.'
                     ),
                     'language_embedding': tfds.features.Tensor(
                         shape=(512,),
                         dtype=np.float32,
-                        doc='Kona language embedding. '
-                            'See https://tfhub.dev/google/universal-sentence-encoder-large/5'
+                        doc='There are no language instructions in the data, set to a dummy value.'
                     ),
                 }),
                 'episode_metadata': tfds.features.FeaturesDict({
@@ -102,7 +101,7 @@ class PAMY2DynamicMotions(tfds.core.GeneratorBasedBuilder):
 
             # assemble episode --> here we're assuming demos so we set reward to 1 at the end
             episode = []
-            for i, step in enumerate(data):
+            for i, step in data.iterrows():
                 dummy_language_instruction = 'move dynamically'
                 # compute Kona language embedding
                 language_embedding = self._embed([dummy_language_instruction])[0].numpy()
