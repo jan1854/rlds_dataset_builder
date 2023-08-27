@@ -132,7 +132,7 @@ class Pamy2DynamicMotions(tfds.core.GeneratorBasedBuilder):
             }
 
             # if you want to skip an example for whatever reason, simply return None
-            return episode_path, sample
+            return str(episode_path), sample
 
         # create list of all examples
         episode_paths = glob.glob(str(path))
