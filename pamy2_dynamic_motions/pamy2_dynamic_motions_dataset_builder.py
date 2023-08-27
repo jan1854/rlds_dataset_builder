@@ -136,6 +136,8 @@ class Pamy2DynamicMotions(tfds.core.GeneratorBasedBuilder):
 
         # create list of all examples
         episode_paths = glob.glob(str(path))
+        # Sort by the number of the data file (there are no leading zeros, so extract the number first and sort by that)
+        episode_paths.sort(key=lambda x: int(Path(x).name[10:-3]))
 
         # for smallish datasets, use single-thread parsing
         for sample in episode_paths:
