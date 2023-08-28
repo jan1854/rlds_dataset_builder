@@ -19,7 +19,7 @@ class Pamy2DynamicMotions(tfds.core.GeneratorBasedBuilder):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._embed = hub.load("https://tfhub.dev/google/universal-sentence-encoder-large/5")
+        # self._embed = hub.load("https://tfhub.dev/google/universal-sentence-encoder-large/5")
 
     def _info(self) -> tfds.core.DatasetInfo:
         """Dataset metadata (homepage, citation,...)."""
@@ -105,8 +105,8 @@ class Pamy2DynamicMotions(tfds.core.GeneratorBasedBuilder):
                 # dummy_language_instruction = 'move dynamically'
                 # compute Kona language embedding
                 # language_embedding = self._embed([dummy_language_instruction])[0].numpy()
-                state = data.loc[i, state_columns].values.astype(np.float32)
-                action = data.loc[i, action_columns].values.astype(np.float32)
+                state = step[state_columns].values.astype(np.float32)
+                action = step[action_columns].values.astype(np.float32)
 
                 episode.append({
                     'observation': {
