@@ -67,14 +67,14 @@ class Pamy2DynamicMotions(tfds.core.GeneratorBasedBuilder):
                         dtype=np.bool_,
                         doc='The data is not divided into episodes, set to False.'
                     ),
-                    'language_instruction': tfds.features.Text(
-                        doc='There are no language instructions in the data, set to a dummy value.'
-                    ),
-                    'language_embedding': tfds.features.Tensor(
-                        shape=(512,),
-                        dtype=np.float32,
-                        doc='There are no language instructions in the data, set to a dummy value.'
-                    ),
+                    # 'language_instruction': tfds.features.Text(
+                    #     doc='There are no language instructions in the data, set to a dummy value.'
+                    # ),
+                    # 'language_embedding': tfds.features.Tensor(
+                    #     shape=(512,),
+                    #     dtype=np.float32,
+                    #     doc='There are no language instructions in the data, set to a dummy value.'
+                    # ),
                 }),
                 'episode_metadata': tfds.features.FeaturesDict({
                     'file_path': tfds.features.Text(
@@ -127,8 +127,8 @@ class Pamy2DynamicMotions(tfds.core.GeneratorBasedBuilder):
                     'is_first': i == 0,
                     'is_last': i == len(data_state_action_only) - 1,
                     'is_terminal': False,
-                    'language_instruction': dummy_language_instruction,
-                    'language_embedding': language_embedding,
+                    # 'language_instruction': dummy_language_instruction,
+                    # 'language_embedding': np.zeros(512,),
                 })
 
             # create output data sample
