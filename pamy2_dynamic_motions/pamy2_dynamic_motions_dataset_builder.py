@@ -148,13 +148,13 @@ class Pamy2DynamicMotions(tfds.core.GeneratorBasedBuilder):
         episode_paths.sort(key=lambda x: int(Path(x).name[10:-3]))
 
         # for smallish datasets, use single-thread parsing
-        for sample in episode_paths:
-            yield _parse_example(Path(sample))
+        # for sample in episode_paths:
+        #     yield _parse_example(Path(sample))
 
         # for large datasets use beam to parallelize data parsing (this will have initialization overhead)
-        # beam = tfds.core.lazy_imports.apache_beam
-        # return (
-        #         beam.Create(episode_paths)
-        #         | beam.Map(_parse_example)
-        # )
+        beam = tfds.core.lazy_imports.apache_beam
+        return (
+                beam.Create(episode_paths)
+                | beam.Map(_parse_example)
+        )
 
