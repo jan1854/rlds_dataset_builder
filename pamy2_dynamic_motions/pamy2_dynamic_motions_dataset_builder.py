@@ -55,11 +55,13 @@ class Pamy2DynamicMotions(tfds.core.GeneratorBasedBuilder):
                     ),
                     'is_first': tfds.features.Scalar(
                         dtype=np.bool_,
-                        doc='The data is not divided into episodes, set to False.'
+                        doc='The continuous motions are chunked into different files, '
+                            'True for the first step of each chunk, False otherwise.'
                     ),
                     'is_last': tfds.features.Scalar(
                         dtype=np.bool_,
-                        doc='The data is not divided into episodes, set to False.'
+                        doc='The continuous motions are chunked into different files, '
+                            'True for the last step of each chunk, False otherwise.'
                     ),
                     'is_terminal': tfds.features.Scalar(
                         dtype=np.bool_,
@@ -107,7 +109,7 @@ class Pamy2DynamicMotions(tfds.core.GeneratorBasedBuilder):
 
             # assemble episode --> here we're assuming demos so we set reward to 1 at the end
             episode = []
-            for step in data_state_action_only:
+            for i, step in enumerate(data_state_action_only):
                 # dummy_language_instruction = 'move dynamically'
                 # compute Kona language embedding
                 # language_embedding = self._embed([dummy_language_instruction])[0].numpy()
@@ -122,8 +124,8 @@ class Pamy2DynamicMotions(tfds.core.GeneratorBasedBuilder):
                     'action': action,
                     'discount': np.ones(1, dtype=np.float32),
                     'reward': np.zeros(1, dtype=np.float32),
-                    'is_first': np.array([False]),
-                    'is_last': np.array([False]),
+                    'is_first': np.array([i == 0]),
+                    'is_last': np.array([i == len(data_state_action_only) - 1]),
                     'is_terminal': np.array([False]),
                     'language_instruction': dummy_language_instruction,
                     'language_embedding': language_embedding,
