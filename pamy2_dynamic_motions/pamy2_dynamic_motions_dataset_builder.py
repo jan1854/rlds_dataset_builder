@@ -99,14 +99,16 @@ class Pamy2DynamicMotions(tfds.core.GeneratorBasedBuilder):
                              + [f"observed_pressure_{i}_{muscle}" for i in range(4) for muscle in ["ago", "antago"]])
             action_columns = [f"desired_pressure_{i}_{muscle}" for i in range(4) for muscle in ["ago", "antago"]]
 
+            data_state_action_only = data[state_columns + action_columns].values
+
             # assemble episode --> here we're assuming demos so we set reward to 1 at the end
             episode = []
-            for i, step in data.iterrows():
+            for step in data_state_action_only:
                 # dummy_language_instruction = 'move dynamically'
                 # compute Kona language embedding
                 # language_embedding = self._embed([dummy_language_instruction])[0].numpy()
-                state = step[state_columns].values.astype(np.float32)
-                action = step[action_columns].values.astype(np.float32)
+                state = step[:len(state_columns)].astype(np.float32)
+                action = step[len(state_columns):].astype(np.float32)
 
                 episode.append({
                     'observation': {
