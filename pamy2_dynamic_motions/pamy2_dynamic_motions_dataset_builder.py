@@ -154,7 +154,7 @@ class Pamy2DynamicMotions(tfds.core.GeneratorBasedBuilder):
         # for large datasets use beam to parallelize data parsing (this will have initialization overhead)
         beam = tfds.core.lazy_imports.apache_beam
         return (
-                beam.Create(Path(episode_paths))
+                beam.Create([Path(episode_path) for episode_path in episode_paths])
                 | beam.Map(_parse_example)
         )
 
